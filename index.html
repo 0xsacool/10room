@@ -112,9 +112,15 @@
             </div>
         </div>
 
-        <!-- ส่วนดูประวัติย้อนหลัง -->
+        <!-- ส่วนดูประวัติย้อนหลัง (รองรับลบรายการแยก & ล้างทั้งหมด) -->
         <div class="bg-white p-5 rounded-xl shadow">
-            <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
+                <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1 rounded-lg transition font-medium">
+                    🗑️ ล้างประวัติทั้งหมด
+                </button>
+            </div>
+            
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
                     <thead>
@@ -123,6 +129,7 @@
                             <th class="p-2 border">ห้อง</th>
                             <th class="p-2 border">เดือน/ปี</th>
                             <th class="p-2 border">ยอดรวม</th>
+                            <th class="p-2 border text-center">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="historyTable">
@@ -171,6 +178,7 @@
             document.getElementById('totalAmount').innerText = `${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`;
 
             saveToHistory({
+                id: Date.now(), // สร้าง ID อ้างอิงสำหรับลบแยกรายการ
                 date: new Date().toLocaleDateString('th-TH'),
                 room: room,
                 month: month,
@@ -235,7 +243,7 @@
             tbody.innerHTML = '';
             
             if(history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
                 return;
             }
 
@@ -246,9 +254,38 @@
                         <td class="p-2 font-bold">${item.room}</td>
                         <td class="p-2">${item.month}</td>
                         <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
+                        <td class="p-2 text-center">
+                            <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded transition" title="ลบรายการนี้">
+                                🗑️ ลบ
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
+        }
+
+        // ลบเฉพาะรายการที่เลือก
+        function deleteSingleHistory(id) {
+            if (confirm("ต้องการลบประวัติรายการนี้ใช่หรือไม่?")) {
+                let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
+                history = history.filter(item => item.id !== id);
+                localStorage.setItem('rentHistory', JSON.stringify(history));
+                loadHistory();
+            }
+        }
+
+        // ล้างประวัติทั้งหมด
+        function clearAllHistory() {
+            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
+            if (history.length === 0) {
+                alert("ไม่มีประวัติให้ล้างครับ");
+                return;
+            }
+
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด? (ไม่สามารถกู้คืนได้)")) {
+                localStorage.removeItem('rentHistory');
+                loadHistory();
+            }
         }
     </script>
 </body>
