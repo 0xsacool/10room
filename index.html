@@ -140,21 +140,39 @@
         </div>
     </div>
 
-    <!-- POPUP แสดงรูปภาพตัวอย่างพร้อมปุ่มดาวน์โหลด/กดค้าง -->
+    <!-- POPUP แสดงรูปภาพตัวอย่างบิล -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 text-center">
             <h3 class="text-lg font-bold text-gray-800">รูปภาพบิลของคุณพร้อมใช้งาน</h3>
             <p class="text-xs text-gray-500">แตะค้างที่รูปภาพด้านล่างเพื่อบันทึก หรือกดปุ่มดาวน์โหลด</p>
             
-            <div id="modalImageContainer" class="border rounded-lg overflow-hidden my-2 flex justify-center bg-gray-50 p-2">
-                <!-- รูปภาพจะถูกแทรกตรงนี้ -->
-            </div>
+            <div id="modalImageContainer" class="border rounded-lg overflow-hidden my-2 flex justify-center bg-gray-50 p-2"></div>
 
             <div class="flex gap-2">
                 <a id="downloadLink" href="#" download="บิลค่าเช่า.png" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-sm transition">
                     ⬇️ บันทึกรูปภาพ
                 </a>
-                <button onclick="closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
+                <button onclick="closeModal('imageModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
+                    ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP แสดงรายละเอียดเลขมิเตอร์และปุ่มดึงกลับไปแก้ไข -->
+    <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4">
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2 text-center" id="detailTitle">รายละเอียดบิล</h3>
+            
+            <div id="detailContent" class="space-y-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border">
+                <!-- รายละเอียดจะมาแสดงตรงนี้ -->
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button id="editBtn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-sm transition">
+                    ✏️ ดึงข้อมูลกลับไปแก้ไข
+                </button>
+                <button onclick="closeModal('detailModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
                     ปิด
                 </button>
             </div>
@@ -203,11 +221,20 @@
                 date: new Date().toLocaleDateString('th-TH'),
                 room: room,
                 month: month,
+                rent: rent,
+                other: other,
+                elecOld: elecOld,
+                elecNew: elecNew,
+                elecRate: elecRate,
+                elecUnits: elecUnits,
+                elecTotal: elecTotal,
+                waterPeople: waterPeople,
+                waterRate: waterRate,
+                waterTotal: waterTotal,
                 total: grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})
             });
         }
 
-        // ระบบแปลงเป็นรูปภาพแล้วแสดง Pop-up
         function generateImageModal() {
             const btn = document.getElementById('downloadBtn');
             const billElement = document.getElementById('billPreview');
@@ -226,16 +253,13 @@
                     const roomName = document.getElementById('roomSelect').value;
                     const fileName = `บิล_${roomName}.png`;
 
-                    // นำรูปภาพไปใส่ใน Modal
                     const container = document.getElementById('modalImageContainer');
                     container.innerHTML = `<img src="${imageData}" class="max-h-80 object-contain rounded shadow" />`;
 
-                    // ตั้งค่าปุ่มดาวน์โหลด
                     const dlLink = document.getElementById('downloadLink');
                     dlLink.href = imageData;
                     dlLink.download = fileName;
 
-                    // แสดง Pop-up
                     document.getElementById('imageModal').classList.remove('hidden');
 
                     btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
@@ -248,8 +272,8 @@
             }, 200);
         }
 
-        function closeModal() {
-            document.getElementById('imageModal').classList.add('hidden');
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
         }
 
         function saveToHistory(data) {
@@ -276,14 +300,66 @@
                         <td class="p-2 font-bold">${item.room}</td>
                         <td class="p-2">${item.month}</td>
                         <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
-                        <td class="p-2 text-center">
-                            <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded transition" title="ลบรายการนี้">
+                        <td class="p-2 text-center space-x-1">
+                            <button onclick="viewDetail(${item.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs transition" title="ดูรายละเอียด">
+                                👁️ ดู
+                            </button>
+                            <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded text-xs transition" title="ลบรายการนี้">
                                 🗑️ ลบ
                             </button>
                         </td>
                     </tr>
                 `;
             });
+        }
+
+        // ฟังก์ชันดูรายละเอียดเลขมิเตอร์และดึงข้อมูลกลับมาแก้
+        function viewDetail(id) {
+            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
+            const item = history.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('detailTitle').innerText = `รายละเอียด ${item.room} (${item.month})`;
+            document.getElementById('detailContent').innerHTML = `
+                <div class="flex justify-between"><span>ค่าเช่าห้อง:</span> <strong>${item.rent ? item.rent.toLocaleString() : 0} บาท</strong></div>
+                <div class="border-t pt-1 font-bold text-yellow-800">⚡ ค่าไฟฟ้า (หน่วยละ ${item.elecRate || 6.5} บาท):</div>
+                <div class="pl-3 text-xs space-y-1">
+                    <div>• เลขมิเตอร์ครั้งก่อน: <strong>${item.elecOld || 0}</strong></div>
+                    <div>• เลขมิเตอร์ครั้งนี้: <strong>${item.elecNew || 0}</strong></div>
+                    <div>• รวมใช้ไป: <strong>${item.elecUnits || 0} หน่วย</strong> (เป็นเงิน ${item.elecTotal ? item.elecTotal.toLocaleString() : 0} บาท)</div>
+                </div>
+                <div class="border-t pt-1 font-bold text-blue-800">💧 ค่าน้ำประปา (เหมาจ่าย):</div>
+                <div class="pl-3 text-xs">
+                    <div>• ผู้เข้าพัก: <strong>${item.waterPeople || 1} คน</strong> (คนละ ${item.waterRate || 100} บาท = ${item.waterTotal ? item.waterTotal.toLocaleString() : 0} บาท)</div>
+                </div>
+                <div class="border-t pt-1 flex justify-between"><span>ค่าใช้จ่ายอื่นๆ:</span> <strong>${item.other ? item.other.toLocaleString() : 0} บาท</strong></div>
+                <div class="border-t pt-2 text-right text-base text-blue-600"><strong>ยอดรวมทั้งสิ้น: ${item.total} บาท</strong></div>
+            `;
+
+            // ผูกปุ่มดึงกลับไปแก้ไข
+            document.getElementById('editBtn').onclick = function() {
+                loadItemToForm(item);
+                closeModal('detailModal');
+            };
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        // ดึงค่าเก่ากลับเข้าฟอร์มด้านบน
+        function loadItemToForm(item) {
+            document.getElementById('roomSelect').value = item.room;
+            document.getElementById('billMonth').value = item.month;
+            document.getElementById('roomRent').value = item.rent || 1000;
+            document.getElementById('otherFee').value = item.other || 0;
+            document.getElementById('elecRate').value = item.elecRate || 6.5;
+            document.getElementById('elecOld').value = item.elecOld || 0;
+            document.getElementById('elecNew').value = item.elecNew || 0;
+            document.getElementById('waterRate').value = item.waterRate || 100;
+            document.getElementById('waterPeople').value = item.waterPeople || 1;
+
+            // คำนวณเพื่อแสดงตัวอย่างบิลทันที
+            calculateAndGenerate();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function deleteSingleHistory(id) {
