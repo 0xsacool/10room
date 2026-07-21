@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบออกบิลบ้านเช่า (10 ห้อง)</title>
+    <!-- Tailwind CSS สำหรับจัดหน้าตา -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas สำหรับแปลงบิลเป็นรูปภาพ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md text-center">
+            <h1 class="text-2xl font-bold">ระบบออกบิล & บันทึกประวัติบ้านเช่า</h1>
+            <p class="text-sm opacity-90">รองรับ 10 ห้อง | คำนวณอัตโนมัติ | เซฟรูปบิลส่ง LINE</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- ฟอร์มกรอกข้อมูล -->
+            <div class="bg-white p-5 rounded-xl shadow">
+                <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700">กรอกข้อมูลออกบิล</h2>
+                <form id="billForm" class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium">เลือกห้อง:</label>
+                        <select id="roomSelect" class="w-full border p-2 rounded mt-1">
+                            <script>
+                                for(let i=1; i<=10; i++) {
+                                    document.write(`<option value="ห้อง ${i}">ห้อง ${i}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium">ประจำเดือน / ปี:</label>
+                        <input type="month" id="billMonth" class="w-full border p-2 rounded mt-1" required>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium">ค่าเช่าห้อง (บาท):</label>
+                            <input type="number" id="roomRent" value="1000" class="w-full border p-2 rounded mt-1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">ค่าใช้จ่ายอื่นๆ (บาท):</label>
+                            <input type="number" id="otherFee" value="0" class="w-full border p-2 rounded mt-1">
+                        </div>
+                    </div>
+
+                    <!-- ค่าไฟ (ปรับค่าเริ่มต้นเป็น 6.5 บาท) -->
+                    <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <p class="font-bold text-yellow-800 text-sm mb-1">ค่าไฟฟ้า (หน่วยละ <input type="number" id="elecRate" value="6.5" step="0.1" class="w-14 text-center border"> บาท)</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="elecOld" placeholder="เลขครั้งก่อน" class="border p-2 rounded text-sm">
+                            <input type="number" id="elecNew" placeholder="เลขครั้งนี้" class="border p-2 rounded text-sm">
+                        </div>
+                    </div>
+
+                    <!-- ค่าน้ำ (คิดเหมาตามจำนวนคน) -->
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="font-bold text-blue-800 text-sm mb-1">ค่าน้ำประปา (เหมาคนละ <input type="number" id="waterRate" value="100" class="w-16 text-center border"> บาท/เดือน)</p>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">จำนวนผู้เข้าพัก (คน):</label>
+                            <input type="number" id="waterPeople" value="1" min="1" class="w-full border p-2 rounded text-sm">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="calculateAndGenerate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">
+                        สร้างบิล & บันทึกข้อมูล
+                    </button>
+                </form>
+            </div>
+
+            <!-- ตัวอย่างบิลที่จะเซฟเป็นรูปภาพ -->
+            <div class="space-y-3">
+                <div id="billPreview" class="bg-white p-6 rounded-xl shadow border border-gray-200">
+                    <div class="text-center border-b pb-3 mb-3">
+                        <h3 class="text-xl font-bold text-blue-600">ใบแจ้งหนี้ค่าเช่าห้องพัก</h3>
+                        <p class="text-sm text-gray-500" id="previewRoom">ห้อง -- | ประจำเดือน --</p>
+                    </div>
+
+                    <table class="w-full text-sm mb-4">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-1">รายการ</th>
+                                <th class="text-center py-1">จำนวน/หน่วย</th>
+                                <th class="text-right py-1">จำนวนเงิน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billItems">
+                            <tr><td colspan="3" class="text-center py-4 text-gray-400">กรอกข้อมูลและกดสร้างบิล</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="border-t pt-2 text-right">
+                        <p class="text-xs text-gray-500">ยอดชำระทั้งสิ้น</p>
+                        <p class="text-2xl font-bold text-blue-600" id="totalAmount">0.00 บาท</p>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-gray-700 border border-blue-100">
+                        <strong>ช่องทางการชำระเงิน:</strong><br>
+                        ธ.ทหารไทยธนชาต 921-2-54481-2 (ชื่อบัญชี วิศิษย์ศักดิ์)
+                    </div>
+                </div>
+
+                <button id="downloadBtn" onclick="downloadImage()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
+                    📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)
+                </button>
+            </div>
+        </div>
+
+        <!-- ส่วนดูประวัติย้อนหลัง -->
+        <div class="bg-white p-5 rounded-xl shadow">
+            <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-2 border">วันที่บันทึก</th>
+                            <th class="p-2 border">ห้อง</th>
+                            <th class="p-2 border">เดือน/ปี</th>
+                            <th class="p-2 border">ยอดรวม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable">
+                        <!-- รายการประวัติจะมาแสดงตรงนี้ -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            loadHistory();
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('billMonth').value = `${now.getFullYear()}-${month}`;
+        };
+
+        function calculateAndGenerate() {
+            const room = document.getElementById('roomSelect').value;
+            const month = document.getElementById('billMonth').value;
+            const rent = parseFloat(document.getElementById('roomRent').value) || 0;
+            const other = parseFloat(document.getElementById('otherFee').value) || 0;
+
+            const elecOld = parseFloat(document.getElementById('elecOld').value) || 0;
+            const elecNew = parseFloat(document.getElementById('elecNew').value) || 0;
+            const elecRate = parseFloat(document.getElementById('elecRate').value) || 0;
+            const elecUnits = Math.max(0, elecNew - elecOld);
+            const elecTotal = elecUnits * elecRate;
+
+            const waterPeople = parseInt(document.getElementById('waterPeople').value) || 1;
+            const waterRate = parseFloat(document.getElementById('waterRate').value) || 100;
+            const waterTotal = waterPeople * waterRate;
+
+            const grandTotal = rent + other + elecTotal + waterTotal;
+
+            document.getElementById('previewRoom').innerText = `${room} | ประจำเดือน ${month}`;
+            
+            document.getElementById('billItems').innerHTML = `
+                <tr class="border-b"><td class="py-1">ค่าเช่าห้องพัก</td><td class="text-center">-</td><td class="text-right">${rent.toLocaleString()}</td></tr>
+                <tr class="border-b"><td class="py-1">ค่าไฟฟ้า (${elecUnits} หน่วย)</td><td class="text-center">${elecUnits} หน่วย</td><td class="text-right">${elecTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
+                <tr class="border-b"><td class="py-1">ค่าน้ำประปา (เหมาจ่าย)</td><td class="text-center">${waterPeople} คน</td><td class="text-right">${waterTotal.toLocaleString()}</td></tr>
+                <tr class="border-b"><td class="py-1">ค่าใช้จ่ายอื่นๆ</td><td class="text-center">-</td><td class="text-right">${other.toLocaleString()}</td></tr>
+            `;
+
+            document.getElementById('totalAmount').innerText = `${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`;
+
+            saveToHistory({
+                date: new Date().toLocaleDateString('th-TH'),
+                room: room,
+                month: month,
+                total: grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+            });
+        }
+
+        function downloadImage() {
+            const btn = document.getElementById('downloadBtn');
+            const billElement = document.getElementById('billPreview');
+            
+            btn.innerText = "⏳ กำลังสร้างรูปภาพ...";
+            btn.disabled = true;
+
+            const options = {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#ffffff"
+            };
+
+            setTimeout(() => {
+                html2canvas(billElement, options).then(canvas => {
+                    const roomName = document.getElementById('roomSelect').value;
+                    const fileName = `บิล_${roomName}.png`;
+                    
+                    try {
+                        const link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = canvas.toDataURL('image/png');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (e) {
+                        const imageData = canvas.toDataURL('image/png');
+                        const newTab = window.open();
+                        newTab.document.write(`<img src="${imageData}" alt="บิลค่าเช่า" style="width:100%;max-width:500px;display:block;margin:auto;"/>`);
+                        newTab.document.write('<p style="text-align:center;font-family:sans-serif;margin-top:10px;">กดค้างที่รูปภาพเพื่อบันทึก หรือส่งต่อเข้า LINE</p>');
+                    }
+
+                    btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
+                    btn.disabled = false;
+                }).catch(err => {
+                    alert("เกิดข้อผิดพลาดในการเซฟรูปภาพ กรุณาลองใหม่อีกครั้ง");
+                    console.error(err);
+                    btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
+                    btn.disabled = false;
+                });
+            }, 300);
+        }
+
+        function saveToHistory(data) {
+            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
+            history.unshift(data);
+            localStorage.setItem('rentHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
+            const tbody = document.getElementById('historyTable');
+            tbody.innerHTML = '';
+            
+            if(history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                return;
+            }
+
+            history.forEach(item => {
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2">${item.date}</td>
+                        <td class="p-2 font-bold">${item.room}</td>
+                        <td class="p-2">${item.month}</td>
+                        <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
