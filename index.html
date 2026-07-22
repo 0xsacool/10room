@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบออกบิลบ้านเช่า (10 ห้อง)</title>
+    <title>ระบบออกบิลบ้านเช่า (10 ห้อง) - ออนไลน์</title>
     <!-- Tailwind CSS สำหรับจัดหน้าตา -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- html2canvas สำหรับแปลงบิลเป็นรูปภาพ -->
@@ -15,7 +15,7 @@
         <!-- Header -->
         <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md text-center">
             <h1 class="text-2xl font-bold">ระบบออกบิล & บันทึกประวัติบ้านเช่า</h1>
-            <p class="text-sm opacity-90">รองรับ 10 ห้อง | คำนวณอัตโนมัติ | เซฟรูปบิลส่ง LINE</p>
+            <p class="text-sm opacity-90">รองรับ 10 ห้อง | บันทึกลง Cloud Google Sheets ดูได้ทุกเครื่อง</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,7 +68,7 @@
                         </div>
                     </div>
 
-                    <button type="button" onclick="calculateAndGenerate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">
+                    <button type="button" id="saveBtn" onclick="calculateAndGenerate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition">
                         สร้างบิล & บันทึกข้อมูล
                     </button>
                 </form>
@@ -115,7 +115,7 @@
         <!-- ส่วนดูประวัติย้อนหลัง -->
         <div class="bg-white p-5 rounded-xl shadow">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
+                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (คลาวด์)</h2>
                 <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1 rounded-lg transition font-medium">
                     🗑️ ล้างประวัติทั้งหมด
                 </button>
@@ -133,7 +133,7 @@
                         </tr>
                     </thead>
                     <tbody id="historyTable">
-                        <!-- รายการประวัติจะมาแสดงตรงนี้ -->
+                        <tr><td colspan="5" class="text-center p-3 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -145,41 +145,32 @@
         <div class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 text-center">
             <h3 class="text-lg font-bold text-gray-800">รูปภาพบิลของคุณพร้อมใช้งาน</h3>
             <p class="text-xs text-gray-500">แตะค้างที่รูปภาพด้านล่างเพื่อบันทึก หรือกดปุ่มดาวน์โหลด</p>
-            
             <div id="modalImageContainer" class="border rounded-lg overflow-hidden my-2 flex justify-center bg-gray-50 p-2"></div>
-
             <div class="flex gap-2">
-                <a id="downloadLink" href="#" download="บิลค่าเช่า.png" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-sm transition">
-                    ⬇️ บันทึกรูปภาพ
-                </a>
-                <button onclick="closeModal('imageModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
-                    ปิด
-                </button>
+                <a id="downloadLink" href="#" download="บิลค่าเช่า.png" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-sm transition">⬇️ บันทึกรูปภาพ</a>
+                <button onclick="closeModal('imageModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">ปิด</button>
             </div>
         </div>
     </div>
 
-    <!-- POPUP แสดงรายละเอียดเลขมิเตอร์และปุ่มดึงกลับไปแก้ไข -->
+    <!-- POPUP แสดงรายละเอียดเลขมิเตอร์ -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4">
             <h3 class="text-lg font-bold text-gray-800 border-b pb-2 text-center" id="detailTitle">รายละเอียดบิล</h3>
-            
-            <div id="detailContent" class="space-y-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border">
-                <!-- รายละเอียดจะมาแสดงตรงนี้ -->
-            </div>
-
+            <div id="detailContent" class="space-y-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border"></div>
             <div class="flex gap-2 pt-2">
-                <button id="editBtn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-sm transition">
-                    ✏️ ดึงข้อมูลกลับไปแก้ไข
-                </button>
-                <button onclick="closeModal('detailModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">
-                    ปิด
-                </button>
+                <button id="editBtn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-sm transition">✏️ ดึงข้อมูลกลับไปแก้ไข</button>
+                <button onclick="closeModal('detailModal')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition">ปิด</button>
             </div>
         </div>
     </div>
 
     <script>
+        // ⚠️ เอา Web App URL จาก Google Apps Script มาวางในเครื่องหมายคำพูดตรงนี้ครับ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKEmp1-q-RmAaT8kOZwbBTSxK6V7AWUUYS3unNP4UwS07Dw1mOBd_eskJJ3j-0mnaL/exec";
+
+        let currentHistoryData = [];
+
         window.onload = function() {
             loadHistory();
             const now = new Date();
@@ -188,6 +179,10 @@
         };
 
         function calculateAndGenerate() {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerText = "⏳ กำลังบันทึกลง Cloud...";
+            saveBtn.disabled = true;
+
             const room = document.getElementById('roomSelect').value;
             const month = document.getElementById('billMonth').value;
             const rent = parseFloat(document.getElementById('roomRent').value) || 0;
@@ -216,7 +211,7 @@
 
             document.getElementById('totalAmount').innerText = `${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`;
 
-            saveToHistory({
+            const dataToSave = {
                 id: Date.now(),
                 date: new Date().toLocaleDateString('th-TH'),
                 room: room,
@@ -232,111 +227,76 @@
                 waterRate: waterRate,
                 waterTotal: waterTotal,
                 total: grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+            };
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "save", data: dataToSave })
+            }).then(() => {
+                saveBtn.innerText = "สร้างบิล & บันทึกข้อมูล";
+                saveBtn.disabled = false;
+                loadHistory();
+            }).catch(err => {
+                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+                saveBtn.innerText = "สร้างบิล & บันทึกข้อมูล";
+                saveBtn.disabled = false;
             });
-        }
-
-        function generateImageModal() {
-            const btn = document.getElementById('downloadBtn');
-            const billElement = document.getElementById('billPreview');
-            
-            btn.innerText = "⏳ กำลังสร้างรูปภาพ...";
-            btn.disabled = true;
-
-            setTimeout(() => {
-                html2canvas(billElement, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: "#ffffff"
-                }).then(canvas => {
-                    const imageData = canvas.toDataURL('image/png');
-                    const roomName = document.getElementById('roomSelect').value;
-                    const fileName = `บิล_${roomName}.png`;
-
-                    const container = document.getElementById('modalImageContainer');
-                    container.innerHTML = `<img src="${imageData}" class="max-h-80 object-contain rounded shadow" />`;
-
-                    const dlLink = document.getElementById('downloadLink');
-                    dlLink.href = imageData;
-                    dlLink.download = fileName;
-
-                    document.getElementById('imageModal').classList.remove('hidden');
-
-                    btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
-                    btn.disabled = false;
-                }).catch(err => {
-                    alert("เกิดข้อผิดพลาด กรุณากด 'สร้างบิล & บันทึกข้อมูล' ก่อนบันทึกรูปภาพครับ");
-                    btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
-                    btn.disabled = false;
-                });
-            }, 200);
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-
-        function saveToHistory(data) {
-            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
-            history.unshift(data);
-            localStorage.setItem('rentHistory', JSON.stringify(history));
-            loadHistory();
         }
 
         function loadHistory() {
-            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
             const tbody = document.getElementById('historyTable');
-            tbody.innerHTML = '';
-            
-            if(history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
-                return;
-            }
+            fetch(SCRIPT_URL)
+                .then(res => res.json())
+                .then(history => {
+                    currentHistoryData = history;
+                    tbody.innerHTML = '';
+                    
+                    if(!history || history.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                        return;
+                    }
 
-            history.forEach(item => {
-                tbody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2">${item.date}</td>
-                        <td class="p-2 font-bold">${item.room}</td>
-                        <td class="p-2">${item.month}</td>
-                        <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
-                        <td class="p-2 text-center space-x-1">
-                            <button onclick="viewDetail(${item.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs transition" title="ดูรายละเอียด">
-                                👁️ ดู
-                            </button>
-                            <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded text-xs transition" title="ลบรายการนี้">
-                                🗑️ ลบ
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
+                    // แสดงรายการล่าสุดขึ้นก่อน
+                    history.reverse().forEach(item => {
+                        tbody.innerHTML += `
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-2">${item.date}</td>
+                                <td class="p-2 font-bold">${item.room}</td>
+                                <td class="p-2">${item.month}</td>
+                                <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
+                                <td class="p-2 text-center space-x-1">
+                                    <button onclick="viewDetail(${item.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs transition">👁️ ดู</button>
+                                    <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded text-xs transition">🗑️ ลบ</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }).catch(() => {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ URL ในโค้ด</td></tr>';
+                });
         }
 
-        // ฟังก์ชันดูรายละเอียดเลขมิเตอร์และดึงข้อมูลกลับมาแก้
         function viewDetail(id) {
-            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
-            const item = history.find(i => i.id === id);
+            const item = currentHistoryData.find(i => i.id == id);
             if (!item) return;
 
             document.getElementById('detailTitle').innerText = `รายละเอียด ${item.room} (${item.month})`;
             document.getElementById('detailContent').innerHTML = `
-                <div class="flex justify-between"><span>ค่าเช่าห้อง:</span> <strong>${item.rent ? item.rent.toLocaleString() : 0} บาท</strong></div>
-                <div class="border-t pt-1 font-bold text-yellow-800">⚡ ค่าไฟฟ้า (หน่วยละ ${item.elecRate || 6.5} บาท):</div>
+                <div class="flex justify-between"><span>ค่าเช่าห้อง:</span> <strong>${Number(item.rent).toLocaleString()} บาท</strong></div>
+                <div class="border-t pt-1 font-bold text-yellow-800">⚡ ค่าไฟฟ้า (หน่วยละ ${item.elecRate} บาท):</div>
                 <div class="pl-3 text-xs space-y-1">
-                    <div>• เลขมิเตอร์ครั้งก่อน: <strong>${item.elecOld || 0}</strong></div>
-                    <div>• เลขมิเตอร์ครั้งนี้: <strong>${item.elecNew || 0}</strong></div>
-                    <div>• รวมใช้ไป: <strong>${item.elecUnits || 0} หน่วย</strong> (เป็นเงิน ${item.elecTotal ? item.elecTotal.toLocaleString() : 0} บาท)</div>
+                    <div>• เลขมิเตอร์ครั้งก่อน: <strong>${item.elecOld}</strong></div>
+                    <div>• เลขมิเตอร์ครั้งนี้: <strong>${item.elecNew}</strong></div>
+                    <div>• รวมใช้ไป: <strong>${item.elecUnits} หน่วย</strong> (เป็นเงิน ${Number(item.elecTotal).toLocaleString()} บาท)</div>
                 </div>
                 <div class="border-t pt-1 font-bold text-blue-800">💧 ค่าน้ำประปา (เหมาจ่าย):</div>
                 <div class="pl-3 text-xs">
-                    <div>• ผู้เข้าพัก: <strong>${item.waterPeople || 1} คน</strong> (คนละ ${item.waterRate || 100} บาท = ${item.waterTotal ? item.waterTotal.toLocaleString() : 0} บาท)</div>
+                    <div>• ผู้เข้าพัก: <strong>${item.waterPeople} คน</strong> (คนละ ${item.waterRate} บาท = ${Number(item.waterTotal).toLocaleString()} บาท)</div>
                 </div>
-                <div class="border-t pt-1 flex justify-between"><span>ค่าใช้จ่ายอื่นๆ:</span> <strong>${item.other ? item.other.toLocaleString() : 0} บาท</strong></div>
+                <div class="border-t pt-1 flex justify-between"><span>ค่าใช้จ่ายอื่นๆ:</span> <strong>${Number(item.other).toLocaleString()} บาท</strong></div>
                 <div class="border-t pt-2 text-right text-base text-blue-600"><strong>ยอดรวมทั้งสิ้น: ${item.total} บาท</strong></div>
             `;
 
-            // ผูกปุ่มดึงกลับไปแก้ไข
             document.getElementById('editBtn').onclick = function() {
                 loadItemToForm(item);
                 closeModal('detailModal');
@@ -345,43 +305,63 @@
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
-        // ดึงค่าเก่ากลับเข้าฟอร์มด้านบน
         function loadItemToForm(item) {
             document.getElementById('roomSelect').value = item.room;
             document.getElementById('billMonth').value = item.month;
-            document.getElementById('roomRent').value = item.rent || 1000;
-            document.getElementById('otherFee').value = item.other || 0;
-            document.getElementById('elecRate').value = item.elecRate || 6.5;
-            document.getElementById('elecOld').value = item.elecOld || 0;
-            document.getElementById('elecNew').value = item.elecNew || 0;
-            document.getElementById('waterRate').value = item.waterRate || 100;
-            document.getElementById('waterPeople').value = item.waterPeople || 1;
+            document.getElementById('roomRent').value = item.rent;
+            document.getElementById('otherFee').value = item.other;
+            document.getElementById('elecRate').value = item.elecRate;
+            document.getElementById('elecOld').value = item.elecOld;
+            document.getElementById('elecNew').value = item.elecNew;
+            document.getElementById('waterRate').value = item.waterRate;
+            document.getElementById('waterPeople').value = item.waterPeople;
 
-            // คำนวณเพื่อแสดงตัวอย่างบิลทันที
             calculateAndGenerate();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function deleteSingleHistory(id) {
             if (confirm("ต้องการลบประวัติรายการนี้ใช่หรือไม่?")) {
-                let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
-                history = history.filter(item => item.id !== id);
-                localStorage.setItem('rentHistory', JSON.stringify(history));
-                loadHistory();
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "delete", id: id })
+                }).then(() => loadHistory());
             }
         }
 
         function clearAllHistory() {
-            let history = JSON.parse(localStorage.getItem('rentHistory')) || [];
-            if (history.length === 0) {
-                alert("ไม่มีประวัติให้ล้างครับ");
-                return;
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด? (ข้อมูลใน Google Sheets จะถูกลบด้วย)")) {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "clearAll" })
+                }).then(() => loadHistory());
             }
+        }
 
-            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด? (ไม่สามารถกู้คืนได้)")) {
-                localStorage.removeItem('rentHistory');
-                loadHistory();
-            }
+        function generateImageModal() {
+            const btn = document.getElementById('downloadBtn');
+            const billElement = document.getElementById('billPreview');
+            btn.innerText = "⏳ กำลังสร้างรูปภาพ...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                html2canvas(billElement, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: "#ffffff" })
+                .then(canvas => {
+                    const imageData = canvas.toDataURL('image/png');
+                    const roomName = document.getElementById('roomSelect').value;
+                    document.getElementById('modalImageContainer').innerHTML = `<img src="${imageData}" class="max-h-80 object-contain rounded shadow" />`;
+                    const dlLink = document.getElementById('downloadLink');
+                    dlLink.href = imageData;
+                    dlLink.download = `บิล_${roomName}.png`;
+                    document.getElementById('imageModal').classList.remove('hidden');
+                    btn.innerText = "📸 บันทึกบิลเป็นรูปภาพ (ส่ง LINE)";
+                    btn.disabled = false;
+                });
+            }, 200);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
         }
     </script>
 </body>
