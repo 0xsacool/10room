@@ -15,7 +15,7 @@
         <!-- Header -->
         <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md text-center">
             <h1 class="text-2xl font-bold">ระบบออกบิล & บันทึกประวัติบ้านเช่า</h1>
-            <p class="text-sm opacity-90">รองรับ 10 ห้อง | บันทึกลง Cloud Google Sheets ดูได้ทุกเครื่อง</p>
+            <p class="text-sm opacity-90">รองรับ 10 ห้อง | ดึงเลขมิเตอร์ให้อัตโนมัติ | บันทึกลง Cloud</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -25,7 +25,7 @@
                 <form id="billForm" class="space-y-3">
                     <div>
                         <label class="block text-sm font-medium">เลือกห้อง:</label>
-                        <select id="roomSelect" class="w-full border p-2 rounded mt-1">
+                        <select id="roomSelect" onchange="autoFillLastMeter()" class="w-full border p-2 rounded mt-1 font-bold text-blue-600">
                             <script>
                                 for(let i=1; i<=10; i++) {
                                     document.write(`<option value="ห้อง ${i}">ห้อง ${i}</option>`);
@@ -52,10 +52,19 @@
 
                     <!-- ค่าไฟ -->
                     <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <p class="font-bold text-yellow-800 text-sm mb-1">ค่าไฟฟ้า (หน่วยละ <input type="number" id="elecRate" value="6.5" step="0.1" class="w-14 text-center border"> บาท)</p>
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="font-bold text-yellow-800 text-sm">ค่าไฟฟ้า (หน่วยละ <input type="number" id="elecRate" value="6.5" step="0.1" class="w-14 text-center border"> บาท)</p>
+                            <span id="meterStatus" class="text-xs text-gray-500"></span>
+                        </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="number" id="elecOld" placeholder="เลขครั้งก่อน" class="border p-2 rounded text-sm">
-                            <input type="number" id="elecNew" placeholder="เลขครั้งนี้" class="border p-2 rounded text-sm">
+                            <div>
+                                <label class="block text-xs text-gray-500">เลขครั้งก่อน (ดึงให้อัตโนมัติ)</label>
+                                <input type="number" id="elecOld" placeholder="เลขครั้งก่อน" class="border p-2 rounded text-sm w-full bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500">เลขครั้งนี้</label>
+                                <input type="number" id="elecNew" placeholder="เลขครั้งนี้" class="border p-2 rounded text-sm w-full">
+                            </div>
                         </div>
                     </div>
 
@@ -166,17 +175,45 @@
     </div>
 
     <script>
-        // ⚠️ เอา Web App URL จาก Google Apps Script มาวางในเครื่องหมายคำพูดตรงนี้ครับ
+        // ⚠️ อย่าลืมใส่ Web App URL ของคุณตรงนี้
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKEmp1-q-RmAaT8kOZwbBTSxK6V7AWUUYS3unNP4UwS07Dw1mOBd_eskJJ3j-0mnaL/exec";
 
         let currentHistoryData = [];
 
         window.onload = function() {
-            loadHistory();
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             document.getElementById('billMonth').value = `${now.getFullYear()}-${month}`;
+            loadHistory();
         };
+
+        // ฟังก์ชันดึงเลขมิเตอร์ล่าสุดของห้องที่เลือก
+        function autoFillLastMeter() {
+            const selectedRoom = document.getElementById('roomSelect').value;
+            const meterStatus = document.getElementById('meterStatus');
+            meterStatus.innerText = "⏳ ค้นหาเลขเก่า...";
+
+            if (!currentHistoryData || currentHistoryData.length === 0) {
+                document.getElementById('elecOld').value = 0;
+                meterStatus.innerText = "(ยังไม่มีประวัติ)";
+                return;
+            }
+
+            // ค้นหาประวัติของห้องนี้ (เนื่องจาก history จัดเรียงล่าสุดขึ้นก่อนอยู่แล้ว)
+            const lastRecord = currentHistoryData.find(item => {
+                const roomName = item.room || item.Room;
+                return roomName === selectedRoom;
+            });
+
+            if (lastRecord) {
+                const lastElecNew = lastRecord.elecNew || lastRecord.ElecNew || 0;
+                document.getElementById('elecOld').value = lastElecNew;
+                meterStatus.innerText = `(ดึงล่าสุด: ${lastElecNew})`;
+            } else {
+                document.getElementById('elecOld').value = 0;
+                meterStatus.innerText = "(ห้องใหม่)";
+            }
+        }
 
         function calculateAndGenerate() {
             const saveBtn = document.getElementById('saveBtn');
@@ -199,6 +236,7 @@
             const waterTotal = waterPeople * waterRate;
 
             const grandTotal = rent + other + elecTotal + waterTotal;
+            const grandTotalFormatted = grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             document.getElementById('previewRoom').innerText = `${room} | ประจำเดือน ${month}`;
             
@@ -209,7 +247,7 @@
                 <tr class="border-b"><td class="py-1">ค่าใช้จ่ายอื่นๆ</td><td class="text-center">-</td><td class="text-right">${other.toLocaleString()}</td></tr>
             `;
 
-            document.getElementById('totalAmount').innerText = `${grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท`;
+            document.getElementById('totalAmount').innerText = `${grandTotalFormatted} บาท`;
 
             const dataToSave = {
                 id: Date.now(),
@@ -226,7 +264,7 @@
                 waterPeople: waterPeople,
                 waterRate: waterRate,
                 waterTotal: waterTotal,
-                total: grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                total: grandTotalFormatted
             };
 
             fetch(SCRIPT_URL, {
@@ -248,22 +286,28 @@
             fetch(SCRIPT_URL)
                 .then(res => res.json())
                 .then(history => {
-                    currentHistoryData = history;
+                    // กลับด้านเรียงจากรายการล่าสุดอยู่บน
+                    currentHistoryData = history ? history.reverse() : [];
                     tbody.innerHTML = '';
                     
-                    if(!history || history.length === 0) {
+                    if(!currentHistoryData || currentHistoryData.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                        autoFillLastMeter();
                         return;
                     }
 
-                    // แสดงรายการล่าสุดขึ้นก่อน
-                    history.reverse().forEach(item => {
+                    currentHistoryData.forEach(item => {
+                        const displayTotal = item.total || item.Total || "0.00";
+                        const displayRoom = item.room || item.Room || "-";
+                        const displayDate = item.date || item.Date || "-";
+                        const displayMonth = item.month || item.Month || "-";
+
                         tbody.innerHTML += `
                             <tr class="border-b hover:bg-gray-50">
-                                <td class="p-2">${item.date}</td>
-                                <td class="p-2 font-bold">${item.room}</td>
-                                <td class="p-2">${item.month}</td>
-                                <td class="p-2 text-blue-600 font-bold">${item.total} บาท</td>
+                                <td class="p-2">${displayDate}</td>
+                                <td class="p-2 font-bold">${displayRoom}</td>
+                                <td class="p-2">${displayMonth}</td>
+                                <td class="p-2 text-blue-600 font-bold">${displayTotal} บาท</td>
                                 <td class="p-2 text-center space-x-1">
                                     <button onclick="viewDetail(${item.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs transition">👁️ ดู</button>
                                     <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded text-xs transition">🗑️ ลบ</button>
@@ -271,6 +315,9 @@
                             </tr>
                         `;
                     });
+
+                    // เมื่อโหลดประวัติเสร็จ ดึงเลขมิเตอร์ใส่ช่องอัตโนมัติทันที
+                    autoFillLastMeter();
                 }).catch(() => {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ URL ในโค้ด</td></tr>';
                 });
@@ -280,21 +327,35 @@
             const item = currentHistoryData.find(i => i.id == id);
             if (!item) return;
 
-            document.getElementById('detailTitle').innerText = `รายละเอียด ${item.room} (${item.month})`;
+            const room = item.room || item.Room || "-";
+            const month = item.month || item.Month || "-";
+            const rent = Number(item.rent || 0);
+            const elecRate = item.elecRate || 0;
+            const elecOld = item.elecOld || 0;
+            const elecNew = item.elecNew || 0;
+            const elecUnits = item.elecUnits || 0;
+            const elecTotal = Number(item.elecTotal || 0);
+            const waterPeople = item.waterPeople || 1;
+            const waterRate = item.waterRate || 100;
+            const waterTotal = Number(item.waterTotal || 0);
+            const other = Number(item.other || 0);
+            const total = item.total || item.Total || "0.00";
+
+            document.getElementById('detailTitle').innerText = `รายละเอียด ${room} (${month})`;
             document.getElementById('detailContent').innerHTML = `
-                <div class="flex justify-between"><span>ค่าเช่าห้อง:</span> <strong>${Number(item.rent).toLocaleString()} บาท</strong></div>
-                <div class="border-t pt-1 font-bold text-yellow-800">⚡ ค่าไฟฟ้า (หน่วยละ ${item.elecRate} บาท):</div>
+                <div class="flex justify-between"><span>ค่าเช่าห้อง:</span> <strong>${rent.toLocaleString()} บาท</strong></div>
+                <div class="border-t pt-1 font-bold text-yellow-800">⚡ ค่าไฟฟ้า (หน่วยละ ${elecRate} บาท):</div>
                 <div class="pl-3 text-xs space-y-1">
-                    <div>• เลขมิเตอร์ครั้งก่อน: <strong>${item.elecOld}</strong></div>
-                    <div>• เลขมิเตอร์ครั้งนี้: <strong>${item.elecNew}</strong></div>
-                    <div>• รวมใช้ไป: <strong>${item.elecUnits} หน่วย</strong> (เป็นเงิน ${Number(item.elecTotal).toLocaleString()} บาท)</div>
+                    <div>• เลขมิเตอร์ครั้งก่อน: <strong>${elecOld}</strong></div>
+                    <div>• เลขมิเตอร์ครั้งนี้: <strong>${elecNew}</strong></div>
+                    <div>• รวมใช้ไป: <strong>${elecUnits} หน่วย</strong> (เป็นเงิน ${elecTotal.toLocaleString()} บาท)</div>
                 </div>
                 <div class="border-t pt-1 font-bold text-blue-800">💧 ค่าน้ำประปา (เหมาจ่าย):</div>
                 <div class="pl-3 text-xs">
-                    <div>• ผู้เข้าพัก: <strong>${item.waterPeople} คน</strong> (คนละ ${item.waterRate} บาท = ${Number(item.waterTotal).toLocaleString()} บาท)</div>
+                    <div>• ผู้เข้าพัก: <strong>${waterPeople} คน</strong> (คนละ ${waterRate} บาท = ${waterTotal.toLocaleString()} บาท)</div>
                 </div>
-                <div class="border-t pt-1 flex justify-between"><span>ค่าใช้จ่ายอื่นๆ:</span> <strong>${Number(item.other).toLocaleString()} บาท</strong></div>
-                <div class="border-t pt-2 text-right text-base text-blue-600"><strong>ยอดรวมทั้งสิ้น: ${item.total} บาท</strong></div>
+                <div class="border-t pt-1 flex justify-between"><span>ค่าใช้จ่ายอื่นๆ:</span> <strong>${other.toLocaleString()} บาท</strong></div>
+                <div class="border-t pt-2 text-right text-base text-blue-600"><strong>ยอดรวมทั้งสิ้น: ${total} บาท</strong></div>
             `;
 
             document.getElementById('editBtn').onclick = function() {
@@ -306,15 +367,15 @@
         }
 
         function loadItemToForm(item) {
-            document.getElementById('roomSelect').value = item.room;
-            document.getElementById('billMonth').value = item.month;
-            document.getElementById('roomRent').value = item.rent;
-            document.getElementById('otherFee').value = item.other;
-            document.getElementById('elecRate').value = item.elecRate;
-            document.getElementById('elecOld').value = item.elecOld;
-            document.getElementById('elecNew').value = item.elecNew;
-            document.getElementById('waterRate').value = item.waterRate;
-            document.getElementById('waterPeople').value = item.waterPeople;
+            document.getElementById('roomSelect').value = item.room || item.Room;
+            document.getElementById('billMonth').value = item.month || item.Month;
+            document.getElementById('roomRent').value = item.rent || 1000;
+            document.getElementById('otherFee').value = item.other || 0;
+            document.getElementById('elecRate').value = item.elecRate || 6.5;
+            document.getElementById('elecOld').value = item.elecOld || 0;
+            document.getElementById('elecNew').value = item.elecNew || 0;
+            document.getElementById('waterRate').value = item.waterRate || 100;
+            document.getElementById('waterPeople').value = item.waterPeople || 1;
 
             calculateAndGenerate();
             window.scrollTo({ top: 0, behavior: 'smooth' });
