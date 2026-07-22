@@ -6,26 +6,31 @@
     <title>ระบบออกบิลบ้านเช่า & Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- เพิ่ม Library สำหรับวาดกราฟสถิติ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans">
 
-    <!-- หน้าจอล็อกอิน -->
+    <!-- หน้าจอล็อกอินแบบปุ่มกดสลับตำแหน่ง -->
     <div id="lockScreen" class="fixed inset-0 bg-blue-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-4">
-            <div class="text-4xl">🔒</div>
-            <h2 class="text-xl font-bold text-gray-800">ระบบจัดการบ้านเช่า v1.0</h2>
-            <p class="text-xs text-gray-500">กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+        <div class="bg-white p-6 rounded-2xl shadow-xl max-w-xs w-full text-center space-y-4">
+            <div class="text-3xl">🔒</div>
+            <h2 class="text-lg font-bold text-gray-800">ระบบจัดการบ้านเช่า</h2>
+            <p class="text-xs text-gray-500">กรุณากดรหัสผ่านเพื่อเข้าใช้งาน</p>
             
-            <form onsubmit="checkPasscode(event)" class="space-y-3">
-                <input type="password" id="passcodeInput" maxlength="10" placeholder="กรอก Passcode" 
-                       class="w-full border-2 border-gray-300 p-3 rounded-xl text-center text-2xl font-bold tracking-widest focus:border-blue-500 outline-none">
-                <p id="passError" class="text-red-500 text-xs hidden">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</p>
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                    เข้าสู่ระบบ
-                </button>
-            </form>
+            <!-- ช่องแสดงจุดรหัสผ่านที่กด -->
+            <div id="pinDots" class="flex justify-center gap-3 my-2 text-2xl tracking-widest text-blue-600 font-bold h-8">
+                - - - - - -
+            </div>
+            <p id="passError" class="text-red-500 text-xs hidden">❌ รหัสผ่านไม่ถูกต้อง</p>
+
+            <!-- แผงปุ่มกดตัวเลขสุ่ม -->
+            <div id="keypadGrid" class="grid grid-cols-3 gap-2 pt-2">
+                <!-- ปุ่มจะถูกสร้างและสุ่มตำแหน่งด้วย JavaScript อัตโนมัติ -->
+            </div>
+
+            <button onclick="clearPin()" class="text-xs text-gray-500 hover:text-red-500 transition pt-1">
+                🔄 ล้างรหัสที่กด
+            </button>
         </div>
     </div>
 
@@ -79,7 +84,7 @@
                     <div class="text-sm space-y-1">
                         <div class="flex justify-between"><span>เก็บจากผู้เช่ารวม:</span> <span id="tenantElecTotal" class="font-bold">0.00 ฿</span></div>
                         <div class="flex justify-between items-center mt-2">
-                            <span>บิลหลวง (MEA):</span> 
+                            <span>บิลหลวง (PEA):</span> 
                             <input type="number" id="masterElecInput" placeholder="ใส่ยอดบิลจริง" class="w-24 border p-1 rounded text-right text-xs">
                         </div>
                         <div class="flex justify-between border-t border-yellow-200 pt-1 mt-1 font-bold" id="elecProfitDiv">
@@ -222,17 +227,18 @@
         </div>
 
         <!-- ประวัติย้อนหลัง -->
-        <div class="flex justify-between items-center border-b pb-2 mb-4">
-    <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (เฉพาะผู้เช่า)</h2>
-    <div class="flex gap-2">
-        <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1 shadow-sm">
-            📥 สำรองข้อมูล (Backup CSV)
-        </button>
-        <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg transition font-medium">
-            🗑️ ล้างประวัติทั้งหมด
-        </button>
-    </div>
-</div>
+        <div class="bg-white p-5 rounded-xl shadow">
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (เฉพาะผู้เช่า)</h2>
+                <div class="flex gap-2">
+                    <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1 shadow-sm">
+                        📥 สำรองข้อมูล (Backup CSV)
+                    </button>
+                    <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg transition font-medium">
+                        🗑️ ล้างประวัติทั้งหมด
+                    </button>
+                </div>
+            </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
@@ -279,20 +285,19 @@
     </div>
 
     <script>
-        // ⚠️ เอา URL จาก Apps Script มาวางตรงนี้ครับ
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyByl_cMDGjxkYnzr6i1V_d3zRi2yIl7UoRcJygFmKIDFq7rjgNEwpx0K0uQ0lkGdvA/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxf9fI-a-_3KzkYyHB4oLO39Sm4W_pdAVp8Bn4lSVAfR1PXmWlYpcloMaaINiB7qCei/exec";
 
         let currentHistoryData = [];
         let chartInstance = null;
+        let enteredPin = ""; // เก็บค่ารหัส PIN ที่กด
 
-        // ฟังก์ชันช่วยจัดการรูปแบบวันที่ (เผื่อกรณี Google Sheets ส่งค่ามาเพี้ยน)
         function formatMonthString(rawMonth) {
             let m = String(rawMonth || "");
             if (m.includes('T')) {
                 const d = new Date(m);
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             }
-            return m.replace(/'/g, ''); // เอา Single quote ออกถ้ามี
+            return m.replace(/'/g, '');
         }
 
         window.onload = function() {
@@ -305,22 +310,81 @@
 
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
                 showMainContent();
+            } else {
+                initKeypad(); // สร้างปุ่มกดสุ่มรหัสผ่าน
             }
         };
 
-        function checkPasscode(e) {
-            e.preventDefault();
-            const input = document.getElementById('passcodeInput').value;
-            const btn = document.getElementById('loginBtn');
-            const err = document.getElementById('passError');
+        // --- ระบบสุ่มปุ่มกดรหัส PIN ---
+        function initKeypad() {
+            const keypadGrid = document.getElementById('keypadGrid');
+            keypadGrid.innerHTML = '';
+            enteredPin = "";
+            updatePinDots();
 
-            btn.innerText = "⏳ กำลังตรวจสอบ...";
-            btn.disabled = true;
+            // สร้างตัวเลข 0-9
+            let numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            // สุ่มตำแหน่งตัวเลข (Shuffle)
+            numbers.sort(() => Math.random() - 0.5);
+
+            // ใส่ตัวเลขลงใน Grid 3 คอลัมน์
+            numbers.forEach(num => {
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.innerText = num;
+                btn.className = "bg-gray-100 hover:bg-blue-100 active:bg-blue-200 text-gray-800 text-xl font-bold py-3 rounded-xl transition shadow-sm border border-gray-200";
+                btn.onclick = () => pressKey(num);
+                keypadGrid.appendChild(btn);
+            });
+
+            // เพิ่มปุ่มลบ (Backspace) ให้อยู่ในช่องสุดท้ายเพื่อความสมดุล
+            const delBtn = document.createElement('button');
+            delBtn.type = "button";
+            delBtn.innerText = "⌫";
+            delBtn.className = "bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 text-lg font-bold py-3 rounded-xl transition shadow-sm border border-red-200 col-span-3";
+            delBtn.onclick = () => deleteKey();
+            keypadGrid.appendChild(delBtn);
+        }
+
+        function pressKey(num) {
+            if (enteredPin.length < 10) {
+                enteredPin += num;
+                updatePinDots();
+
+                // เมื่อกดครบ 6 หลัก ส่งไปเช็กกับ Server อัตโนมัติ (หรือจะเช็กความยาวตามรหัสจริง)
+                if (enteredPin.length === 6) {
+                    verifyPinCode();
+                }
+            }
+        }
+
+        function deleteKey() {
+            enteredPin = enteredPin.slice(0, -1);
+            updatePinDots();
+            document.getElementById('passError').classList.add('hidden');
+        }
+
+        function clearPin() {
+            enteredPin = "";
+            updatePinDots();
+            document.getElementById('passError').classList.add('hidden');
+        }
+
+        function updatePinDots() {
+            let dotsHTML = "";
+            for (let i = 0; i < 6; i++) {
+                dotsHTML += i < enteredPin.length ? "● " : "- ";
+            }
+            document.getElementById('pinDots').innerText = dotsHTML.trim();
+        }
+
+        function verifyPinCode() {
+            const err = document.getElementById('passError');
             err.classList.add('hidden');
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: "verifyPasscode", passcode: input })
+                body: JSON.stringify({ action: "verifyPasscode", passcode: enteredPin })
             })
             .then(res => res.json())
             .then(data => {
@@ -329,15 +393,15 @@
                     showMainContent();
                 } else {
                     err.classList.remove('hidden');
-                    document.getElementById('passcodeInput').value = '';
+                    enteredPin = "";
+                    updatePinDots();
+                    initKeypad(); // สุ่มปุ่มใหม่เพื่อความปลอดภัยเมื่อใส่ผิด
                 }
-                btn.innerText = "เข้าสู่ระบบ";
-                btn.disabled = false;
             })
             .catch(() => {
                 alert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย");
-                btn.innerText = "เข้าสู่ระบบ";
-                btn.disabled = false;
+                enteredPin = "";
+                updatePinDots();
             });
         }
 
@@ -368,11 +432,10 @@
                 return;
             }
 
-            // กรองหาประวัติเฉพาะของห้องนี้ และไม่เอา _MASTER_BILL_
             const roomRecords = currentHistoryData.filter(item => (item.room || item.Room) === selectedRoom && item.room !== '_MASTER_BILL_');
 
             if (roomRecords.length > 0) {
-                const lastRecord = roomRecords[0]; // สมมติว่าเรียงใหม่สุดอยู่บนแล้วจากการ .reverse()
+                const lastRecord = roomRecords[0];
                 const lastElecNew = lastRecord.elecNew || lastRecord.ElecNew || 0;
                 document.getElementById('elecOld').value = lastElecNew;
                 meterStatus.innerText = `(ดึงล่าสุด: ${lastElecNew})`;
@@ -457,7 +520,6 @@
                     currentHistoryData = history ? history.reverse() : [];
                     tbody.innerHTML = '';
                     
-                    // กรองข้อมูล _MASTER_BILL_ ออกจากตารางประวัติผู้เช่า
                     const tenantHistory = currentHistoryData.filter(item => item.room !== '_MASTER_BILL_' && item.Room !== '_MASTER_BILL_');
 
                     if(!tenantHistory || tenantHistory.length === 0) {
@@ -494,75 +556,14 @@
                     updateChart();
                     autoFillLastMeter();
                 }).catch(() => {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ URL ในโค้ด</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้</td></tr>';
                 });
         }
-         // --- Backup  ---
-function exportToCSV() {
-    if (!currentHistoryData || currentHistoryData.length === 0) {
-        alert("ไม่มีข้อมูลประวัติให้สำรองข้อมูลครับ");
-        return;
-    }
 
-    // 1. กำหนดหัวคอลัมน์ภาษาไทยสำหรับไฟล์ Excel/CSV
-    const headers = [
-        "ID", "วันที่บันทึก", "ห้อง", "เดือน/ปี", "ค่าเช่า", "ค่าใช้จ่ายอื่นๆ",
-        "เลขไฟเก่า", "เลขไฟใหม่", "หน่วยละ(ไฟ)", "หน่วยไฟรวม", "ค่าไฟรวม",
-        "จำนวนคน(น้ำ)", "เหมาคนละ(น้ำ)", "ค่าน้ำรวม", "ยอดรวมทั้งสิ้น", "สถานะการชำระ"
-    ];
-
-    // 2. แปลงข้อมูลใน Array ให้อยู่ในรูปแบบบรรทัดของ CSV
-    const rows = currentHistoryData.map(item => {
-        const room = item.room || item.Room || "";
-        const month = formatMonthString(item.month || item.Month);
-        const date = item.date || item.Date || "";
-        const total = String(item.total || item.Total || "0").replace(/,/g, '');
-        const status = (item.status || "unpaid") === "paid" ? "ชำระแล้ว" : "ค้างชำระ";
-
-        return [
-            item.id || "",
-            `"${date}"`,
-            `"${room}"`,
-            `"${month}"`,
-            item.rent || 0,
-            item.other || 0,
-            item.elecOld || 0,
-            item.elecNew || 0,
-            item.elecRate || 0,
-            item.elecUnits || 0,
-            item.elecTotal || 0,
-            item.waterPeople || 0,
-            item.waterRate || 0,
-            item.waterTotal || 0,
-            total,
-            `"${status}"`
-        ].join(",");
-    });
-
-    // 3. รวม Header และข้อมูลเข้าด้วยกัน + ใส่ BOM (\uFEFF) เพื่อให้ Excel เปิดภาษาไทยได้ไม่เป็นภาษาต่างด้าว
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-
-    // 4. สร้างลิงก์ดาวน์โหลดไฟล์อัตโนมัติ
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    
-    // ตั้งชื่อไฟล์ตาม วัน-เดือน-ปี ที่กดดาวน์โหลด
-    const today = new Date().toISOString().split('T')[0];
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Backup_Rental_Bills_${today}.csv`);
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-        // --- ส่วนจัดการกราฟสถิติ 6 เดือน ---
         function updateChart() {
             if (!currentHistoryData) return;
 
-            // รวมข้อมูลแยกตามเดือน
             const monthlyStats = {};
-            
             currentHistoryData.forEach(item => {
                 const m = formatMonthString(item.month || item.Month);
                 if (!monthlyStats[m]) {
@@ -578,7 +579,6 @@ function exportToCSV() {
                 }
             });
 
-            // ดึงเดือน 6 เดือนล่าสุดเรียงลำดับอดีต -> ปัจจุบัน
             const sortedMonths = Object.keys(monthlyStats).sort().reverse().slice(0, 6).reverse();
 
             const labels = sortedMonths;
@@ -595,9 +595,9 @@ function exportToCSV() {
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'เก็บค่าไฟผู้เช่า', data: dataTenantElec, backgroundColor: '#fcd34d' }, // เหลือง
+                        { label: 'เก็บค่าไฟผู้เช่า', data: dataTenantElec, backgroundColor: '#fcd34d' },
                         { label: 'บิลหลวง (ค่าไฟ)', data: dataMasterElec, backgroundColor: '#fbbf24' },
-                        { label: 'เก็บค่าน้ำผู้เช่า', data: dataTenantWater, backgroundColor: '#93c5fd' }, // ฟ้า
+                        { label: 'เก็บค่าน้ำผู้เช่า', data: dataTenantWater, backgroundColor: '#93c5fd' },
                         { label: 'บิลหลวง (ค่าน้ำ)', data: dataMasterWater, backgroundColor: '#60a5fa' }
                     ]
                 },
@@ -610,7 +610,6 @@ function exportToCSV() {
             });
         }
 
-        // --- ส่วนบันทึกบิลหลวง ---
         async function saveMasterBill() {
             const btn = document.getElementById('saveMasterBtn');
             const selectedMonth = document.getElementById('dashFilterMonth').value;
@@ -620,7 +619,6 @@ function exportToCSV() {
             btn.innerText = "⏳ กำลังบันทึก...";
             btn.disabled = true;
 
-            // ค้นหาว่าเดือนนี้เคยบันทึกบิลหลวงไว้หรือยัง ถ้ามีให้ลบของเก่าก่อน
             const existingMaster = currentHistoryData.find(item => 
                 (item.room === '_MASTER_BILL_' || item.Room === '_MASTER_BILL_') && 
                 formatMonthString(item.month || item.Month) === selectedMonth
@@ -633,7 +631,7 @@ function exportToCSV() {
             const dataToSave = {
                 id: Date.now(),
                 date: new Date().toLocaleDateString('th-TH'),
-                room: "_MASTER_BILL_", // ชื่อห้องซ่อน
+                room: "_MASTER_BILL_",
                 month: selectedMonth,
                 rent: 0, other: 0, elecOld: 0, elecNew: 0, elecRate: 0, elecUnits: 0,
                 elecTotal: mElec, waterPeople: 0, waterRate: 0,
@@ -648,7 +646,7 @@ function exportToCSV() {
 
             btn.innerText = "💾 บันทึกยอดบิลหลวงประจำเดือน";
             btn.disabled = false;
-            loadHistory(); // โหลดข้อมูลใหม่ทั้งหมด
+            loadHistory();
         }
 
         function renderDashboard() {
@@ -656,8 +654,6 @@ function exportToCSV() {
             if (!currentHistoryData) return;
 
             const monthData = currentHistoryData.filter(item => formatMonthString(item.month || item.Month) === selectedMonth);
-            
-            // แยกข้อมูลผู้เช่าปกติ ออกจากข้อมูลบิลหลวง
             const tenantData = monthData.filter(item => item.room !== '_MASTER_BILL_' && item.Room !== '_MASTER_BILL_');
             const masterData = monthData.find(item => item.room === '_MASTER_BILL_' || item.Room === '_MASTER_BILL_');
 
@@ -676,20 +672,17 @@ function exportToCSV() {
                 sumWaterTotal += parseFloat(item.waterTotal) || 0;
             });
 
-            // อัปเดตการ์ด 4 ใบแรก
             document.getElementById('dashIssued').innerText = `${tenantData.length} / 10 ห้อง`;
             document.getElementById('dashTotal').innerText = `${sumTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('dashPaid').innerText = `${sumPaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             document.getElementById('dashUnpaid').innerText = `${sumUnpaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
 
-            // อัปเดตข้อมูลน้ำ/ไฟรวม
             document.getElementById('dashElecUnits').innerText = `${sumElecUnits} หน่วย`;
             document.getElementById('tenantElecTotal').innerText = `${sumElecTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
             
             document.getElementById('dashWaterPeople').innerText = `${sumWaterPeople} คน`;
             document.getElementById('tenantWaterTotal').innerText = `${sumWaterTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
 
-            // จัดการข้อมูลบิลหลวงใน UI
             const masterElecInput = document.getElementById('masterElecInput');
             const masterWaterInput = document.getElementById('masterWaterInput');
             
@@ -701,7 +694,6 @@ function exportToCSV() {
                 masterWaterInput.value = '';
             }
 
-            // คำนวณส่วนต่างแบบ Real-time (แม้ผู้ใช้เพิ่งพิมพ์ ยังไม่ได้กดเซฟ)
             function calculateProfits() {
                 const mElec = parseFloat(masterElecInput.value) || 0;
                 const mWater = parseFloat(masterWaterInput.value) || 0;
@@ -723,7 +715,6 @@ function exportToCSV() {
             calculateProfits();
         }
 
-        // ฟังก์ชัน Toggle, View, Delete, ImageModal ใช้งานได้ตามปกติเหมือนเดิม
         function toggleStatus(id, newStatus) {
             const item = currentHistoryData.find(i => i.id == id);
             if(item) item.status = newStatus;
@@ -795,6 +786,59 @@ function exportToCSV() {
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด?")) {
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "clearAll" }) }).then(() => loadHistory());
             }
+        }
+
+        function exportToCSV() {
+            if (!currentHistoryData || currentHistoryData.length === 0) {
+                alert("ไม่มีข้อมูลประวัติให้สำรองข้อมูลครับ");
+                return;
+            }
+
+            const headers = [
+                "ID", "วันที่บันทึก", "ห้อง", "เดือน/ปี", "ค่าเช่า", "ค่าใช้จ่ายอื่นๆ",
+                "เลขไฟเก่า", "เลขไฟใหม่", "หน่วยละ(ไฟ)", "หน่วยไฟรวม", "ค่าไฟรวม",
+                "จำนวนคน(น้ำ)", "เหมาคนละ(น้ำ)", "ค่าน้ำรวม", "ยอดรวมทั้งสิ้น", "สถานะการชำระ"
+            ];
+
+            const rows = currentHistoryData.map(item => {
+                const room = item.room || item.Room || "";
+                const month = formatMonthString(item.month || item.Month);
+                const date = item.date || item.Date || "";
+                const total = String(item.total || item.Total || "0").replace(/,/g, '');
+                const status = (item.status || "unpaid") === "paid" ? "ชำระแล้ว" : "ค้างชำระ";
+
+                return [
+                    item.id || "",
+                    `"${date}"`,
+                    `"${room}"`,
+                    `"${month}"`,
+                    item.rent || 0,
+                    item.other || 0,
+                    item.elecOld || 0,
+                    item.elecNew || 0,
+                    item.elecRate || 0,
+                    item.elecUnits || 0,
+                    item.elecTotal || 0,
+                    item.waterPeople || 0,
+                    item.waterRate || 0,
+                    item.waterTotal || 0,
+                    total,
+                    `"${status}"`
+                ].join(",");
+            });
+
+            const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            const today = new Date().toISOString().split('T')[0];
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Backup_Rental_Bills_${today}.csv`);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function generateImageModal() {
