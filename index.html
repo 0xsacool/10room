@@ -222,13 +222,17 @@
         </div>
 
         <!-- ประวัติย้อนหลัง -->
-        <div class="bg-white p-5 rounded-xl shadow">
-            <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (เฉพาะผู้เช่า)</h2>
-                <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1 rounded-lg transition font-medium">
-                    🗑️ ล้างประวัติทั้งหมด
-                </button>
-            </div>
+        <div class="flex justify-between items-center border-b pb-2 mb-4">
+    <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (เฉพาะผู้เช่า)</h2>
+    <div class="flex gap-2">
+        <button onclick="exportToCSV()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1 shadow-sm">
+            📥 สำรองข้อมูล (Backup CSV)
+        </button>
+        <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg transition font-medium">
+            🗑️ ล้างประวัติทั้งหมด
+        </button>
+    </div>
+</div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
