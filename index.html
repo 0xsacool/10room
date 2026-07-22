@@ -4,21 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบออกบิลบ้านเช่า & Dashboard</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans">
-    <div class="max-w-5xl mx-auto space-y-6">
+
+    <div id="lockScreen" class="fixed inset-0 bg-blue-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center space-y-4">
+            <div class="text-4xl">🔒</div>
+            <h2 class="text-xl font-bold text-gray-800">ระบบจัดการบ้านเช่า</h2>
+            <p class="text-xs text-gray-500">กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+            
+            <form onsubmit="checkPasscode(event)" class="space-y-3">
+                <input type="password" id="passcodeInput" maxlength="10" placeholder="กรอก Passcode" 
+                       class="w-full border-2 border-gray-300 p-3 rounded-xl text-center text-2xl font-bold tracking-widest focus:border-blue-500 outline-none">
+                
+                <p id="passError" class="text-red-500 text-xs hidden">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</p>
+
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="mainContent" class="hidden max-w-5xl mx-auto space-y-6">
         
-        <!-- Header -->
-        <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md text-center">
-            <h1 class="text-2xl font-bold">ระบบออกบิล & จัดการบ้านเช่าออนไลน์</h1>
-            <p class="text-sm opacity-90">สรุปรายรับ | เช็กการชำระเงิน | บันทึกลง Cloud Google Sheets</p>
+        <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">ระบบออกบิล & จัดการบ้านเช่าออนไลน์</h1>
+                <p class="text-sm opacity-90">สรุปรายรับ | เช็กการชำระเงิน | บันทึกลง Cloud Google Sheets</p>
+            </div>
+            <button onclick="logout()" class="bg-blue-800 hover:bg-blue-900 text-white text-xs px-3 py-2 rounded-lg transition border border-blue-400">
+                🔒 ล็อกเอ้าท์
+            </button>
         </div>
 
-        <!-- DASHBOARD SUMMARY -->
         <div class="bg-white p-5 rounded-xl shadow border border-gray-200">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-base font-bold text-gray-700 flex items-center gap-2">
@@ -47,7 +68,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- ฟอร์มกรอกข้อมูล -->
             <div class="bg-white p-5 rounded-xl shadow">
                 <h2 class="text-lg font-bold border-b pb-2 mb-4 text-gray-700">กรอกข้อมูลออกบิล</h2>
                 <form id="billForm" class="space-y-3">
@@ -78,7 +98,6 @@
                         </div>
                     </div>
 
-                    <!-- ค่าไฟ -->
                     <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                         <div class="flex justify-between items-center mb-1">
                             <p class="font-bold text-yellow-800 text-sm">ค่าไฟฟ้า (หน่วยละ <input type="number" id="elecRate" value="6.5" step="0.1" class="w-14 text-center border"> บาท)</p>
@@ -96,7 +115,6 @@
                         </div>
                     </div>
 
-                    <!-- ค่าน้ำ (เหมา) -->
                     <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
                         <p class="font-bold text-blue-800 text-sm mb-1">ค่าน้ำประปา (เหมาคนละ <input type="number" id="waterRate" value="100" class="w-16 text-center border"> บาท/เดือน)</p>
                         <div>
@@ -111,7 +129,6 @@
                 </form>
             </div>
 
-            <!-- ตัวอย่างบิล -->
             <div class="space-y-3">
                 <div id="billPreview" class="bg-white p-6 rounded-xl shadow border border-gray-200">
                     <div class="text-center border-b pb-3 mb-3">
@@ -149,7 +166,6 @@
             </div>
         </div>
 
-        <!-- ส่วนดูประวัติย้อนหลัง -->
         <div class="bg-white p-5 rounded-xl shadow">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
                 <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
@@ -178,7 +194,6 @@
         </div>
     </div>
 
-    <!-- POPUP แสดงรูปภาพตัวอย่างบิล -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-4 max-w-md w-full space-y-3 text-center">
             <h3 class="text-lg font-bold text-gray-800">รูปภาพบิลของคุณพร้อมใช้งาน</h3>
@@ -191,7 +206,6 @@
         </div>
     </div>
 
-    <!-- POPUP แสดงรายละเอียด -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4">
             <h3 class="text-lg font-bold text-gray-800 border-b pb-2 text-center" id="detailTitle">รายละเอียดบิล</h3>
@@ -205,7 +219,7 @@
 
     <script>
         // ⚠️ เอา URL จาก Apps Script มาวางตรงนี้ครับ
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5YfPcvuF0HEXwRrotqwJctOniya6nTg7xepjvEkGMPzEQHej1K5luijXdX97puE2e/exec";
+        const SCRIPT_URL = "วาง_URL_จาก_GOOGLE_APPS_SCRIPT_ตรงนี้";
 
         let currentHistoryData = [];
 
@@ -216,9 +230,57 @@
             
             document.getElementById('billMonth').value = currentMonthStr;
             document.getElementById('dashFilterMonth').value = currentMonthStr;
-            
-            loadHistory();
+
+            // เช็กสถานะการเข้าสู่ระบบ
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                showMainContent();
+            }
         };
+
+        // ฟังก์ชันส่ง Passcode ไปเช็กที่ Google Apps Script
+        function checkPasscode(e) {
+            e.preventDefault();
+            const input = document.getElementById('passcodeInput').value;
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('passError');
+
+            btn.innerText = "⏳ กำลังตรวจสอบ...";
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "verifyPasscode", passcode: input })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    showMainContent();
+                } else {
+                    err.classList.remove('hidden');
+                    document.getElementById('passcodeInput').value = '';
+                }
+                btn.innerText = "เข้าสู่ระบบ";
+                btn.disabled = false;
+            })
+            .catch(() => {
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย");
+                btn.innerText = "เข้าสู่ระบบ";
+                btn.disabled = false;
+            });
+        }
+
+        function showMainContent() {
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            loadHistory();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
 
         function syncMonthFilter() {
             document.getElementById('dashFilterMonth').value = document.getElementById('billMonth').value;
@@ -298,7 +360,7 @@
                 waterRate: waterRate,
                 waterTotal: waterTotal,
                 total: grandTotalFormatted,
-                status: "unpaid" // ตั้งเริ่มต้นเป็นยังไม่จ่าย
+                status: "unpaid"
             };
 
             fetch(SCRIPT_URL, {
