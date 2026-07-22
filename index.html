@@ -219,7 +219,7 @@
 
     <script>
         // ⚠️ เอา URL จาก Apps Script มาวางตรงนี้ครับ
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxf9fI-a-_3KzkYyHB4oLO39Sm4W_pdAVp8Bn4lSVAfR1PXmWlYpcloMaaINiB7qCei/exec";
+        const SCRIPT_URL = "วาง_URL_จาก_GOOGLE_APPS_SCRIPT_ตรงนี้";
 
         let currentHistoryData = [];
 
@@ -435,50 +435,33 @@
             }).then(() => loadHistory());
         }
 
-function renderDashboard() {
-    const selectedMonth = document.getElementById('dashFilterMonth').value;
-    if (!currentHistoryData || currentHistoryData.length === 0) {
-        document.getElementById('dashIssued').innerText = `0 / 10 ห้อง`;
-        document.getElementById('dashTotal').innerText = `0.00 ฿`;
-        document.getElementById('dashPaid').innerText = `0.00 ฿`;
-        document.getElementById('dashUnpaid').innerText = `0.00 ฿`;
-        return;
-    }
+        function renderDashboard() {
+            const selectedMonth = document.getElementById('dashFilterMonth').value;
+            if (!currentHistoryData) return;
 
-    // กรองข้อมูลโดยไม่สนใจตัวอักษรเล็ก-ใหญ่ ของชื่อ Key
-    const monthData = currentHistoryData.filter(item => {
-        // ค้นหา key สำหรับเดือน
-        const itemMonth = item.month || item.Month || item.MONTH || "";
-        return String(itemMonth).trim() === String(selectedMonth).trim();
-    });
-    
-    const countRooms = monthData.length;
-    let sumTotal = 0;
-    let sumPaid = 0;
-    let sumUnpaid = 0;
+            const monthData = currentHistoryData.filter(item => (item.month || item.Month) === selectedMonth);
+            
+            const countRooms = monthData.length;
+            let sumTotal = 0;
+            let sumPaid = 0;
+            let sumUnpaid = 0;
 
-    monthData.forEach(item => {
-        // ดึงค่ายอดรวม
-        const rawTotal = item.total || item.Total || item.TOTAL || "0";
-        const totalVal = parseFloat(String(rawTotal).replace(/,/g, '')) || 0;
-        
-        // ดึงสถานะ
-        const status = (item.status || item.Status || "unpaid").toLowerCase();
-        
-        sumTotal += totalVal;
-        
-        if (status === "paid") {
-            sumPaid += totalVal;
-        } else {
-            sumUnpaid += totalVal;
+            monthData.forEach(item => {
+                const totalVal = parseFloat(String(item.total || item.Total || "0").replace(/,/g, '')) || 0;
+                sumTotal += totalVal;
+                
+                if ((item.status || "unpaid") === "paid") {
+                    sumPaid += totalVal;
+                } else {
+                    sumUnpaid += totalVal;
+                }
+            });
+
+            document.getElementById('dashIssued').innerText = `${countRooms} / 10 ห้อง`;
+            document.getElementById('dashTotal').innerText = `${sumTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('dashPaid').innerText = `${sumPaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('dashUnpaid').innerText = `${sumUnpaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
         }
-    });
-
-    document.getElementById('dashIssued').innerText = `${countRooms} / 10 ห้อง`;
-    document.getElementById('dashTotal').innerText = `${sumTotal.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿`;
-    document.getElementById('dashPaid').innerText = `${sumPaid.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿`;
-    document.getElementById('dashUnpaid').innerText = `${sumUnpaid.toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿`;
-}
 
         function viewDetail(id) {
             const item = currentHistoryData.find(i => i.id == id);
