@@ -219,7 +219,7 @@
 
     <script>
         // ⚠️ เอา URL จาก Apps Script มาวางตรงนี้ครับ
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxf9fI-a-_3KzkYyHB4oLO39Sm4W_pdAVp8Bn4lSVAfR1PXmWlYpcloMaaINiB7qCei/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6ty7DhFQs-b6fGU2YAxWwcN-i67ada6NnK9Jh3ROBj32YTuZDfrZ2RriTpW0pBtqQ/exec";
 
         let currentHistoryData = [];
 
@@ -288,27 +288,30 @@
         }
 
         function autoFillLastMeter() {
-            const selectedRoom = document.getElementById('roomSelect').value;
-            const meterStatus = document.getElementById('meterStatus');
-            meterStatus.innerText = "⏳ ค้นหาเลขเก่า...";
+    const selectedRoom = document.getElementById('roomSelect').value;
+    const meterStatus = document.getElementById('meterStatus');
+    meterStatus.innerText = "⏳ ค้นหาเลขเก่า...";
 
-            if (!currentHistoryData || currentHistoryData.length === 0) {
-                document.getElementById('elecOld').value = 0;
-                meterStatus.innerText = "(ยังไม่มีประวัติ)";
-                return;
-            }
+    if (!currentHistoryData || currentHistoryData.length === 0) {
+        document.getElementById('elecOld').value = 0;
+        meterStatus.innerText = "(ยังไม่มีประวัติ)";
+        return;
+    }
 
-            const lastRecord = currentHistoryData.find(item => (item.room || item.Room) === selectedRoom);
+    // กรองประวัติทั้งหมดของห้องที่เลือก
+    const roomRecords = currentHistoryData.filter(item => (item.room || item.Room) === selectedRoom);
 
-            if (lastRecord) {
-                const lastElecNew = lastRecord.elecNew || lastRecord.ElecNew || 0;
-                document.getElementById('elecOld').value = lastElecNew;
-                meterStatus.innerText = `(ดึงล่าสุด: ${lastElecNew})`;
-            } else {
-                document.getElementById('elecOld').value = 0;
-                meterStatus.innerText = "(ห้องใหม่)";
-            }
-        }
+    if (roomRecords.length > 0) {
+        // ดึงรายการล่าสุดจาก Array (กรณีที่เรียงจากใหม่ไปเก่าอยู่แล้ว)
+        const lastRecord = roomRecords[0];
+        const lastElecNew = lastRecord.elecNew || lastRecord.ElecNew || 0;
+        document.getElementById('elecOld').value = lastElecNew;
+        meterStatus.innerText = `(ดึงล่าสุด: ${lastElecNew})`;
+    } else {
+        document.getElementById('elecOld').value = 0;
+        meterStatus.innerText = "(ห้องใหม่)";
+    }
+}
 
         function calculateAndGenerate() {
             const saveBtn = document.getElementById('saveBtn');
