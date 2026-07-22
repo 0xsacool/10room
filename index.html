@@ -3,19 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบออกบิลบ้านเช่า (10 ห้อง) - ออนไลน์</title>
-    <!-- Tailwind CSS สำหรับจัดหน้าตา -->
+    <title>ระบบออกบิลบ้านเช่า & Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2canvas สำหรับแปลงบิลเป็นรูปภาพ -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans">
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-5xl mx-auto space-y-6">
         
         <!-- Header -->
         <div class="bg-blue-600 text-white p-4 rounded-xl shadow-md text-center">
-            <h1 class="text-2xl font-bold">ระบบออกบิล & บันทึกประวัติบ้านเช่า</h1>
-            <p class="text-sm opacity-90">รองรับ 10 ห้อง | ดึงเลขมิเตอร์ให้อัตโนมัติ | บันทึกลง Cloud</p>
+            <h1 class="text-2xl font-bold">ระบบออกบิล & จัดการบ้านเช่าออนไลน์</h1>
+            <p class="text-sm opacity-90">สรุปรายรับ | เช็กการชำระเงิน | บันทึกลง Cloud Google Sheets</p>
+        </div>
+
+        <!-- DASHBOARD SUMMARY -->
+        <div class="bg-white p-5 rounded-xl shadow border border-gray-200">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-base font-bold text-gray-700 flex items-center gap-2">
+                    📊 สรุปภาพรวมประจำเดือน 
+                    <input type="month" id="dashFilterMonth" onchange="renderDashboard()" class="border rounded p-1 text-sm bg-gray-50 text-blue-600 font-bold">
+                </h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                    <p class="text-xs text-blue-600 font-medium">ออกบิลแล้ว</p>
+                    <p class="text-xl font-bold text-blue-800" id="dashIssued">0 / 10 ห้อง</p>
+                </div>
+                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p class="text-xs text-gray-600 font-medium">ยอดเรียกเก็บทั้งหมด</p>
+                    <p class="text-lg font-bold text-gray-800" id="dashTotal">0.00 ฿</p>
+                </div>
+                <div class="p-3 bg-green-50 border border-green-100 rounded-lg">
+                    <p class="text-xs text-green-600 font-medium">ชำระแล้ว (🟢)</p>
+                    <p class="text-lg font-bold text-green-700" id="dashPaid">0.00 ฿</p>
+                </div>
+                <div class="p-3 bg-red-50 border border-red-100 rounded-lg">
+                    <p class="text-xs text-red-600 font-medium">ค้างชำระ (🔴)</p>
+                    <p class="text-lg font-bold text-red-700" id="dashUnpaid">0.00 ฿</p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -36,7 +64,7 @@
 
                     <div>
                         <label class="block text-sm font-medium">ประจำเดือน / ปี:</label>
-                        <input type="month" id="billMonth" class="w-full border p-2 rounded mt-1" required>
+                        <input type="month" id="billMonth" onchange="syncMonthFilter()" class="w-full border p-2 rounded mt-1" required>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
@@ -58,7 +86,7 @@
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-xs text-gray-500">เลขครั้งก่อน (ดึงให้อัตโนมัติ)</label>
+                                <label class="block text-xs text-gray-500">เลขครั้งก่อน</label>
                                 <input type="number" id="elecOld" placeholder="เลขครั้งก่อน" class="border p-2 rounded text-sm w-full bg-gray-50">
                             </div>
                             <div>
@@ -124,7 +152,7 @@
         <!-- ส่วนดูประวัติย้อนหลัง -->
         <div class="bg-white p-5 rounded-xl shadow">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง (คลาวด์)</h2>
+                <h2 class="text-lg font-bold text-gray-700">ประวัติการออกบิลย้อนหลัง</h2>
                 <button onclick="clearAllHistory()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1 rounded-lg transition font-medium">
                     🗑️ ล้างประวัติทั้งหมด
                 </button>
@@ -133,16 +161,17 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-100">
+                        <tr class="bg-gray-100 text-gray-700">
                             <th class="p-2 border">วันที่บันทึก</th>
                             <th class="p-2 border">ห้อง</th>
                             <th class="p-2 border">เดือน/ปี</th>
                             <th class="p-2 border">ยอดรวม</th>
+                            <th class="p-2 border text-center">สถานะการชำระ</th>
                             <th class="p-2 border text-center">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="historyTable">
-                        <tr><td colspan="5" class="text-center p-3 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>
+                        <tr><td colspan="6" class="text-center p-3 text-gray-400">⏳ กำลังโหลดข้อมูล...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -162,7 +191,7 @@
         </div>
     </div>
 
-    <!-- POPUP แสดงรายละเอียดเลขมิเตอร์ -->
+    <!-- POPUP แสดงรายละเอียด -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl p-5 max-w-md w-full space-y-4">
             <h3 class="text-lg font-bold text-gray-800 border-b pb-2 text-center" id="detailTitle">รายละเอียดบิล</h3>
@@ -175,19 +204,27 @@
     </div>
 
     <script>
-        // ⚠️ อย่าลืมใส่ Web App URL ของคุณตรงนี้
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKEmp1-q-RmAaT8kOZwbBTSxK6V7AWUUYS3unNP4UwS07Dw1mOBd_eskJJ3j-0mnaL/exec";
+        // ⚠️ เอา URL จาก Apps Script มาวางตรงนี้ครับ
+        const SCRIPT_URL = "วาง_URL_จาก_GOOGLE_APPS_SCRIPT_ตรงนี้";
 
         let currentHistoryData = [];
 
         window.onload = function() {
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('billMonth').value = `${now.getFullYear()}-${month}`;
+            const currentMonthStr = `${now.getFullYear()}-${month}`;
+            
+            document.getElementById('billMonth').value = currentMonthStr;
+            document.getElementById('dashFilterMonth').value = currentMonthStr;
+            
             loadHistory();
         };
 
-        // ฟังก์ชันดึงเลขมิเตอร์ล่าสุดของห้องที่เลือก
+        function syncMonthFilter() {
+            document.getElementById('dashFilterMonth').value = document.getElementById('billMonth').value;
+            renderDashboard();
+        }
+
         function autoFillLastMeter() {
             const selectedRoom = document.getElementById('roomSelect').value;
             const meterStatus = document.getElementById('meterStatus');
@@ -199,11 +236,7 @@
                 return;
             }
 
-            // ค้นหาประวัติของห้องนี้ (เนื่องจาก history จัดเรียงล่าสุดขึ้นก่อนอยู่แล้ว)
-            const lastRecord = currentHistoryData.find(item => {
-                const roomName = item.room || item.Room;
-                return roomName === selectedRoom;
-            });
+            const lastRecord = currentHistoryData.find(item => (item.room || item.Room) === selectedRoom);
 
             if (lastRecord) {
                 const lastElecNew = lastRecord.elecNew || lastRecord.ElecNew || 0;
@@ -264,7 +297,8 @@
                 waterPeople: waterPeople,
                 waterRate: waterRate,
                 waterTotal: waterTotal,
-                total: grandTotalFormatted
+                total: grandTotalFormatted,
+                status: "unpaid" // ตั้งเริ่มต้นเป็นยังไม่จ่าย
             };
 
             fetch(SCRIPT_URL, {
@@ -274,7 +308,7 @@
                 saveBtn.innerText = "สร้างบิล & บันทึกข้อมูล";
                 saveBtn.disabled = false;
                 loadHistory();
-            }).catch(err => {
+            }).catch(() => {
                 alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
                 saveBtn.innerText = "สร้างบิล & บันทึกข้อมูล";
                 saveBtn.disabled = false;
@@ -286,12 +320,12 @@
             fetch(SCRIPT_URL)
                 .then(res => res.json())
                 .then(history => {
-                    // กลับด้านเรียงจากรายการล่าสุดอยู่บน
                     currentHistoryData = history ? history.reverse() : [];
                     tbody.innerHTML = '';
                     
                     if(!currentHistoryData || currentHistoryData.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center p-3 text-gray-400">ยังไม่มีประวัติการออกบิล</td></tr>';
+                        renderDashboard();
                         autoFillLastMeter();
                         return;
                     }
@@ -301,6 +335,11 @@
                         const displayRoom = item.room || item.Room || "-";
                         const displayDate = item.date || item.Date || "-";
                         const displayMonth = item.month || item.Month || "-";
+                        const status = item.status || "unpaid";
+
+                        const statusBadge = status === "paid" 
+                            ? `<button onclick="toggleStatus(${item.id}, 'unpaid')" class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-green-200 transition">🟢 จ่ายแล้ว</button>`
+                            : `<button onclick="toggleStatus(${item.id}, 'paid')" class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-red-200 transition">🔴 ค้างชำระ</button>`;
 
                         tbody.innerHTML += `
                             <tr class="border-b hover:bg-gray-50">
@@ -308,6 +347,7 @@
                                 <td class="p-2 font-bold">${displayRoom}</td>
                                 <td class="p-2">${displayMonth}</td>
                                 <td class="p-2 text-blue-600 font-bold">${displayTotal} บาท</td>
+                                <td class="p-2 text-center">${statusBadge}</td>
                                 <td class="p-2 text-center space-x-1">
                                     <button onclick="viewDetail(${item.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs transition">👁️ ดู</button>
                                     <button onclick="deleteSingleHistory(${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded text-xs transition">🗑️ ลบ</button>
@@ -316,11 +356,49 @@
                         `;
                     });
 
-                    // เมื่อโหลดประวัติเสร็จ ดึงเลขมิเตอร์ใส่ช่องอัตโนมัติทันที
+                    renderDashboard();
                     autoFillLastMeter();
                 }).catch(() => {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ URL ในโค้ด</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-3 text-red-400">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบ URL ในโค้ด</td></tr>';
                 });
+        }
+
+        function toggleStatus(id, newStatus) {
+            const item = currentHistoryData.find(i => i.id == id);
+            if(item) item.status = newStatus;
+            
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "updateStatus", id: id, status: newStatus })
+            }).then(() => loadHistory());
+        }
+
+        function renderDashboard() {
+            const selectedMonth = document.getElementById('dashFilterMonth').value;
+            if (!currentHistoryData) return;
+
+            const monthData = currentHistoryData.filter(item => (item.month || item.Month) === selectedMonth);
+            
+            const countRooms = monthData.length;
+            let sumTotal = 0;
+            let sumPaid = 0;
+            let sumUnpaid = 0;
+
+            monthData.forEach(item => {
+                const totalVal = parseFloat(String(item.total || item.Total || "0").replace(/,/g, '')) || 0;
+                sumTotal += totalVal;
+                
+                if ((item.status || "unpaid") === "paid") {
+                    sumPaid += totalVal;
+                } else {
+                    sumUnpaid += totalVal;
+                }
+            });
+
+            document.getElementById('dashIssued').innerText = `${countRooms} / 10 ห้อง`;
+            document.getElementById('dashTotal').innerText = `${sumTotal.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('dashPaid').innerText = `${sumPaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
+            document.getElementById('dashUnpaid').innerText = `${sumUnpaid.toLocaleString('th-TH', {minimumFractionDigits: 2})} ฿`;
         }
 
         function viewDetail(id) {
@@ -377,6 +455,7 @@
             document.getElementById('waterRate').value = item.waterRate || 100;
             document.getElementById('waterPeople').value = item.waterPeople || 1;
 
+            syncMonthFilter();
             calculateAndGenerate();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -391,7 +470,7 @@
         }
 
         function clearAllHistory() {
-            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด? (ข้อมูลใน Google Sheets จะถูกลบด้วย)")) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติการออกบิลทั้งหมด?")) {
                 fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: "clearAll" })
